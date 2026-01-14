@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+    
+    <!-- =======================================================================
+         PROJECT INFO
+         ======================================================================= -->
+    <groupId>com.example</groupId>
+    <artifactId>kafka-simple</artifactId>
+    <version>1.0.0</version>
+    <name>kafka-simple</name>
+    <description>Simple Kafka Demo - Learn Kafka Basics</description>
+    
+    <!-- =======================================================================
+         SPRING BOOT PARENT
+         - Provides default configurations for Spring Boot
+         - Manages versions of all Spring dependencies
+         ======================================================================= -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
+    
+    <!-- =======================================================================
+         JAVA VERSION
+         ======================================================================= -->
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+    
+    <!-- =======================================================================
+         DEPENDENCIES
+         ======================================================================= -->
+    <dependencies>
+        
+        <!-- ===================================================================
+             SPRING BOOT STARTER WEB
+             - Provides REST API support (Controllers, @GetMapping, etc.)
+             - Embedded Tomcat server
+             - JSON serialization with Jackson
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <!-- ===================================================================
+             SPRING KAFKA
+             - This is the main Kafka integration for Spring Boot
+             - Provides:
+               • KafkaTemplate - to send messages
+               • @KafkaListener - to receive messages
+               • Auto-configuration for producers and consumers
+               • Serializers/Deserializers
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        
+        <!-- ===================================================================
+             LOMBOK (Optional but very useful)
+             - Reduces boilerplate code
+             - @Slf4j - auto-generates logger
+             - @Data - auto-generates getters/setters
+             =================================================================== -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
+        <!-- ===================================================================
+             SPRING BOOT DEVTOOLS (Optional)
+             - Auto-restart on code changes
+             - Faster development cycle
+             =================================================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        
+    </dependencies>
+    
+    <!-- =======================================================================
+         BUILD CONFIGURATION
+         ======================================================================= -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,21 @@
+#!/bin/sh
+# Maven Wrapper script for Unix-based systems
+
+# Determine the Java command to use
+if [ -n "$JAVA_HOME" ] ; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+# Download Maven wrapper jar if not present
+WRAPPER_JAR=".mvn/wrapper/maven-wrapper.jar"
+if [ ! -f "$WRAPPER_JAR" ]; then
+    echo "Downloading Maven wrapper..."
+    mkdir -p .mvn/wrapper
+    curl -o "$WRAPPER_JAR" https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar
+fi
+
+exec "$JAVACMD" \
+    -jar "$WRAPPER_JAR" \
+    "$@"

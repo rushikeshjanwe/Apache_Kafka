@@ -1,0 +1,123 @@
+# =============================================================================
+# DOCKER COMPOSE - KAFKA SETUP
+# =============================================================================
+# This file sets up:
+# 1. Zookeeper - Kafka's coordination service (manages broker metadata)
+# 2. Kafka Broker - The actual message broker
+# 3. Kafka UI - Web interface to visualize topics, messages, consumers
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # ZOOKEEPER
+  # ===========================================================================
+  # What is Zookeeper?
+  # - Kafka uses Zookeeper to manage cluster metadata
+  # - It keeps track of: which brokers are alive, topic configurations,
+  #   partition leaders, consumer group offsets (in older versions)
+  # - Think of it as the "brain" that coordinates the Kafka cluster
+  # 
+  # Note: Kafka is moving away from Zookeeper (KRaft mode), but most
+  # production systems still use Zookeeper as of 2024
+  # ===========================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"                    # Zookeeper client port
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181      # Port for Kafka to connect
+      ZOOKEEPER_TICK_TIME: 2000        # Basic time unit in ms for heartbeats
+    healthcheck:
+      test: echo ruok | nc localhost 2181 | grep imok
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # KAFKA BROKER
+  # ===========================================================================
+  # What is a Kafka Broker?
+  # - A Kafka broker is a single Kafka server
+  # - It receives messages from producers, stores them, and serves them to consumers
+  # - In production, you'd have multiple brokers for fault tolerance
+  # - Each broker can handle hundreds of thousands of messages per second
+  # ===========================================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"                    # External listener (your app connects here)
+      - "29092:29092"                  # Internal listener (for inter-broker communication)
+    environment:
+      KAFKA_BROKER_ID: 1               # Unique ID for this broker
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181  # Where to find Zookeeper
+      
+      # -------------------------------------------------------------------------
+      # LISTENERS - This is where most people get confused!
+      # -------------------------------------------------------------------------
+      # KAFKA_LISTENERS: What interfaces Kafka binds to (inside container)
+      # KAFKA_ADVERTISED_LISTENERS: What Kafka tells clients to connect to
+      # 
+      # Why two listeners?
+      # - PLAINTEXT://kafka:29092 → For services inside Docker network
+      # - PLAINTEXT_HOST://localhost:9092 → For your app running on host machine
+      # -------------------------------------------------------------------------
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      
+      # -------------------------------------------------------------------------
+      # TOPIC SETTINGS
+      # -------------------------------------------------------------------------
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1    # For single broker setup
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'      # Auto-create topics (dev only!)
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'            # Allow topic deletion
+    healthcheck:
+      test: kafka-topics --bootstrap-server localhost:9092 --list
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ===========================================================================
+  # KAFKA UI
+  # ===========================================================================
+  # A beautiful web interface to:
+  # - View topics and their configurations
+  # - See messages in topics
+  # - Monitor consumer groups and their lag
+  # - Create/delete topics
+  # 
+  # Access at: http://localhost:8090
+  # ===========================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"                    # Access UI at localhost:8090
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local     # Display name in UI
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092  # Connect to Kafka
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181      # Connect to Zookeeper
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
+# =============================================================================
+# QUICK COMMANDS REFERENCE
+# =============================================================================
+# Start everything:     docker-compose up -d
+# Stop everything:      docker-compose down
+# View logs:            docker-compose logs -f kafka
+# Check status:         docker-compose ps
+# Remove all data:      docker-compose down -v
+# =============================================================================

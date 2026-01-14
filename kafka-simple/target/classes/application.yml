@@ -1,0 +1,137 @@
+# =============================================================================
+# APPLICATION CONFIGURATION
+# =============================================================================
+# This file contains all the configuration for your Spring Boot application
+# YAML format is preferred over .properties because it's more readable
+# =============================================================================
+
+server:
+  port: 8080                          # Your app runs on this port
+
+# =============================================================================
+# SPRING KAFKA CONFIGURATION
+# =============================================================================
+# This is where we configure how our app connects to Kafka
+# =============================================================================
+
+spring:
+  application:
+    name: kafka-simple                # Application name (shows in logs)
+
+  kafka:
+    # -------------------------------------------------------------------------
+    # BOOTSTRAP SERVERS
+    # -------------------------------------------------------------------------
+    # What is bootstrap-servers?
+    # - The initial connection point to your Kafka cluster
+    # - Your app connects here first, then Kafka tells it about other brokers
+    # - Format: host1:port1,host2:port2,host3:port3
+    # - For local Docker setup, it's localhost:9092
+    # -------------------------------------------------------------------------
+    bootstrap-servers: localhost:9092
+
+    # -------------------------------------------------------------------------
+    # PRODUCER CONFIGURATION
+    # -------------------------------------------------------------------------
+    # These settings control how your app SENDS messages to Kafka
+    # -------------------------------------------------------------------------
+    producer:
+      # Key Serializer - How to convert message KEY to bytes
+      # We're using String keys (like "user-123")
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      
+      # Value Serializer - How to convert message VALUE to bytes
+      # We're using String values (like "Hello World")
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      
+      # -----------------------------------------------------------------------
+      # ACKS (Acknowledgments) - VERY IMPORTANT FOR DATA DURABILITY!
+      # -----------------------------------------------------------------------
+      # acks=0  → Don't wait for any acknowledgment (fastest, but may lose data)
+      # acks=1  → Wait for leader broker to acknowledge (balanced)
+      # acks=all → Wait for ALL replicas to acknowledge (safest, slowest)
+      #
+      # For production: always use "all" for important data
+      # -----------------------------------------------------------------------
+      acks: all
+      
+      # Retries - How many times to retry if sending fails
+      retries: 3
+      
+      # Properties for additional producer settings
+      properties:
+        # Enable idempotence - prevents duplicate messages on retry
+        enable.idempotence: true
+        
+        # Max in-flight requests - for ordering guarantee
+        max.in.flight.requests.per.connection: 5
+
+    # -------------------------------------------------------------------------
+    # CONSUMER CONFIGURATION
+    # -------------------------------------------------------------------------
+    # These settings control how your app RECEIVES messages from Kafka
+    # -------------------------------------------------------------------------
+    consumer:
+      # Key Deserializer - How to convert bytes back to message KEY
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      
+      # Value Deserializer - How to convert bytes back to message VALUE
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      
+      # -----------------------------------------------------------------------
+      # GROUP ID - CRITICAL CONCEPT!
+      # -----------------------------------------------------------------------
+      # What is a Consumer Group?
+      # - A group of consumers that work together to consume a topic
+      # - Each partition is assigned to only ONE consumer in the group
+      # - If you have 3 partitions and 3 consumers in same group:
+      #   → Each consumer gets 1 partition
+      # - If a consumer dies, its partitions are reassigned to others
+      #
+      # Why is it important?
+      # - Consumers in SAME group → share the work (each message read once)
+      # - Consumers in DIFFERENT groups → each gets ALL messages
+      # -----------------------------------------------------------------------
+      group-id: my-first-consumer-group
+      
+      # -----------------------------------------------------------------------
+      # AUTO OFFSET RESET
+      # -----------------------------------------------------------------------
+      # What happens when consumer starts and has no committed offset?
+      # - earliest: Start reading from the beginning of the topic
+      # - latest: Start reading only new messages (skip old ones)
+      # - none: Throw error if no offset found
+      #
+      # For learning: use "earliest" so you see all messages
+      # For production: depends on your use case
+      # -----------------------------------------------------------------------
+      auto-offset-reset: earliest
+      
+      # -----------------------------------------------------------------------
+      # ENABLE AUTO COMMIT
+      # -----------------------------------------------------------------------
+      # Should Kafka automatically commit offsets?
+      # - true: Kafka commits every 5 seconds (default)
+      # - false: You manually commit after processing (safer)
+      #
+      # What is an offset?
+      # - A number that tracks which messages a consumer has read
+      # - Partition 0: offset 0, 1, 2, 3... (each message has an offset)
+      # - After reading offset 5, consumer commits "I've read up to 5"
+      # - If consumer restarts, it continues from offset 6
+      # -----------------------------------------------------------------------
+      enable-auto-commit: true
+      auto-commit-interval: 1000      # Commit every 1 second
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+# Set logging levels to see what's happening
+# =============================================================================
+
+logging:
+  level:
+    root: INFO
+    com.example.kafka: DEBUG          # Our code - show detailed logs
+    org.apache.kafka: WARN            # Kafka internals - only warnings
+    org.springframework.kafka: INFO   # Spring Kafka - info level
