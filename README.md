@@ -1,6 +1,6 @@
 
 	APACHE KAKFA NOTES 
-		
+		 
 What is Kafka 
 Kafka is an distributed Event streaming platform used for asynchronous communication between services.
  
